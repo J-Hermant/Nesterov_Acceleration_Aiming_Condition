@@ -1,5 +1,5 @@
 # Pyenv VirtualEnv Environment
-PYTHON_PATH="/PATH_TO_YOUR_VIRTUAL_ENV/bin"
+PYTHON_PATH="jhermant/conda/ml4ip/bin"
 export PYTHON_PATH
 
 # # ======== Modules ========
