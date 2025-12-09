@@ -49,7 +49,7 @@ for opt in "#{OPT_LIST[@]}" ; do
                         --wandb_entity ${WANDB_ENTITY} \
                         --wandb_project_name ${WANDB_PROJECT_NAME} \
                         "
-            CMD="sbatch run_cifar.sh ${SHELL_ARGS}"
+            CMD="sbatch exp/image_classification/cifar10/run_cifar.sh ${SHELL_ARGS}"
             echo $CMD
             eval $CMD
 
