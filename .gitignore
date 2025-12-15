@@ -4,7 +4,11 @@
 .DS_Store
 .AppleDouble
 .LSOverride
-
+*.pth
+**/__pycache__
+*.npy
+*.gz
+*.txt
 # Icon must end with two \r
 Icon
 
