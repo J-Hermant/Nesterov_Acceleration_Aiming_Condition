@@ -137,7 +137,7 @@ loss_trajectory = dict_results["loss_trajectory"]
 print("Number of iterations = {}".format(len(weights_trajectory)))
 
 ###
-# Computation of RACOGA
+# Computation of AIMING CONDITION
 ###
 post_process_loader = torch.utils.data.DataLoader(train_set, batch_size=128)
 if hparams.n_data != None and data_choice == "CIFAR10":
