@@ -73,11 +73,11 @@ elif data_choice == "MNIST" or data_choice == "FashionMNIST" or data_choice == "
     normalize = t.Normalize((0.5,), (0.5,))
 flatten =  t.Lambda(lambda x:x.view(-1))
 transform_list = t.Compose([to_tensor, normalize, flatten])
-train_set = torchvision.datasets.CIFAR10(root='../dataset', train=True, transform=transform_list, download=True)
+train_set = torchvision.datasets.CIFAR10(root='../data', train=True, transform=transform_list, download=True)
 
 data_choice = hparams.data
 if data_choice == "CIFAR10":
-    train_set = torchvision.datasets.CIFAR10(root='../dataset', train=True, transform=transform_list, download=True)
+    train_set = torchvision.datasets.CIFAR10(root='../data', train=True, transform=transform_list, download=True)
 elif data_choice == "SPHERE":
     # Sphere data
     checkpoint_train = torch.load('../dataset/sphere/train_dataset_sphere.pth')
@@ -85,11 +85,11 @@ elif data_choice == "SPHERE":
 elif data_choice == "MNIST":
     train_set = torchvision.datasets.MNIST(root='../dataset', train=True, transform=transform_list, download=True)
 elif data_choice == "FashionMNIST":
-    train_set = torchvision.datasets.FashionMNIST(root='../dataset', train=True, transform=transform_list, download=True)
+    train_set = torchvision.datasets.FashionMNIST(root='../data', train=True, transform=transform_list, download=True)
 elif data_choice == "KMNIST":
-    train_set = torchvision.datasets.KMNIST(root='../dataset', train=True, transform=transform_list, download=True)
+    train_set = torchvision.datasets.KMNIST(root='../data', train=True, transform=transform_list, download=True)
 elif data_choice == "EMNIST":
-    train_set = torchvision.datasets.KMNIST(root='../dataset', train=True, transform=transform_list, download=False)
+    train_set = torchvision.datasets.KMNIST(root='../data', train=True, transform=transform_list, download=False)
 
 # Load results
 # Save the training loss
@@ -133,7 +133,10 @@ dict_path = path_results+"/"+network_type+'_n_epoch_'+str(n_epoch)+'_batch_'+bat
 dict_results = torch.load(dict_path)
 weights_trajectory = dict_results["weights_trajectory"]
 loss_trajectory = dict_results["loss_trajectory"]
+x_star = weights_trajectory[-1]
 
+
+x_star_flat = torch.cat([p.flatten().to(device) for p in x_star])
 print("Number of iterations = {}".format(len(weights_trajectory)))
 
 ###
@@ -188,42 +191,96 @@ if alg == "SGD" or alg == "SNAG" or alg == "ADAM" or alg == "RMSprop":
         racoga_list.append(racoga.detach().cpu().numpy())
         scalar_prod_list.append(scalar_prod.detach().cpu().numpy())
 else:
-    for k in tqdm(range(len(weights_trajectory))):
+    for k in tqdm(range(len(weights_trajectory)-1)):
         iteration_list.append(k)
+        # x = weights_trajectory[k]
+        # for j, param in enumerate(net.parameters()):
+        #     param.data = x[j].to(device)
+        # # sum_gradient = torch.tensor([]).to(device)
+        # # sum_gradient_norm = 0
+
+        # for i, (batch, targets) in enumerate(post_process_loader):
+        #     batch = batch.to(device)
+        #     if network_type == "CNN":
+        #         batch_size = batch.size()[0]
+        #         if data_choice == "CIFAR10":
+        #             batch = batch.view((batch_size, 3, 32, 32))
+        #         elif data_choice == "MNIST" or data_choice == "FashionMNIST" or data_choice == "KMNIST" or data_choice == "EMNIST":
+        #             batch = batch.view((batch_size, 1, 28, 28))
+        #     output = net(batch)
+        #     targets = targets.to(device)
+        #     loss = criterion(output, targets)
+
+        #     optimizer.zero_grad()
+        #     loss.backward()
+        #     #save gradients
+        #     gradient_i = torch.tensor([]).to(device)
+        #     for param in net.parameters():
+        #         gradient_i = torch.cat((gradient_i,param.grad.flatten()))
+        #     if sum_gradient.size() != torch.Size([0]):
+        #         sum_gradient += gradient_i
+        #         sum_gradient_norm += torch.sum(gradient_i**2)
+        #     else:
+        #         sum_gradient = gradient_i
+
+        # scalar_prod = (1/2) * (torch.sum(sum_gradient**2) - sum_gradient_norm)
+        # racoga = scalar_prod/sum_gradient_norm
+        # racoga_list.append(racoga.detach().cpu().numpy())
+        # scalar_prod_list.append(scalar_prod.detach().cpu().numpy())
+        eps = 1e-12  # pour éviter division par zéro
+
+
+
         x = weights_trajectory[k]
-        for j, param in enumerate(net.parameters()):
-            param.data = x[j].to(device)
-        sum_gradient = torch.tensor([]).to(device)
-        sum_gradient_norm = 0
+
+        # Mettre le réseau à theta_k
+        with torch.no_grad():
+            for j, param in enumerate(net.parameters()):
+                param.copy_(x[j].to(device))
+
+        # Construire theta_k (vecteur)
+        x_k_flat = torch.cat([p.flatten().to(device) for p in x])
+        diff_flat = x_k_flat - x_star_flat 
+
+        sum_gradient = torch.tensor([], device=device)
+        n_batches = 0
 
         for i, (batch, targets) in enumerate(post_process_loader):
             batch = batch.to(device)
             if network_type == "CNN":
-                batch_size = batch.size()[0]
+                batch_size = batch.size(0)
                 if data_choice == "CIFAR10":
                     batch = batch.view((batch_size, 3, 32, 32))
-                elif data_choice == "MNIST" or data_choice == "FashionMNIST" or data_choice == "KMNIST" or data_choice == "EMNIST":
+                elif data_choice in ["MNIST", "FashionMNIST", "KMNIST", "EMNIST"]:
                     batch = batch.view((batch_size, 1, 28, 28))
+
             output = net(batch)
             targets = targets.to(device)
             loss = criterion(output, targets)
 
             optimizer.zero_grad()
             loss.backward()
-            #save gradients
-            gradient_i = torch.tensor([]).to(device)
-            for param in net.parameters():
-                gradient_i = torch.cat((gradient_i,param.grad.flatten()))
-            if sum_gradient.size() != torch.Size([0]):
-                sum_gradient += gradient_i
-                sum_gradient_norm += torch.sum(gradient_i**2)
-            else:
-                sum_gradient = gradient_i
 
-        scalar_prod = (1/2) * (torch.sum(sum_gradient**2) - sum_gradient_norm)
-        racoga = scalar_prod/sum_gradient_norm
-        racoga_list.append(racoga.detach().cpu().numpy())
-        scalar_prod_list.append(scalar_prod.detach().cpu().numpy())
+            # gradient vector g_i
+            grad_i = torch.cat([param.grad.flatten() for param in net.parameters()]).to(device)
+
+            if sum_gradient.numel() == 0:
+                sum_gradient = grad_i
+            else:
+                sum_gradient += grad_i
+
+            n_batches += 1
+
+        # Gradient moyen (optionnel mais souvent plus logique)
+        g = sum_gradient / max(n_batches, 1)
+
+        # cos = <g, diff> / (||g|| ||diff||)
+        num = torch.dot(g, diff_flat)
+        den = (torch.norm(g) * torch.norm(diff_flat)).clamp_min(eps)
+        cos_val = num / den
+
+        racoga_list.append(cos_val.detach().cpu().numpy())
+
 duration = time.time() - start
 #Save the RACOGA evolution
 dict = {
