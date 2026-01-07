@@ -142,7 +142,7 @@ print("Number of iterations = {}".format(len(weights_trajectory)))
 ###
 # Computation of Aiming Condition
 ###
-post_process_loader = torch.utils.data.DataLoader(train_set, batch_size=128)
+post_process_loader = torch.utils.data.DataLoader(train_set, batch_size=50000)
 if hparams.n_data != None and data_choice == "CIFAR10":
     post_process_loader = list(post_process_loader)
     n_batch_data = hparams.n_data // 128
