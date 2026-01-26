@@ -20,7 +20,7 @@ x_min = -2
 x_max = 2
 
 ### Define grid
-nb_step = 300000
+nb_step = 100000
 
 
 tt = np.linspace(x_min, x_max, nb_step)
@@ -108,7 +108,7 @@ plt.plot(gamma[0:],(np.sqrt(vec_mu)*gamma)[0:],color="r", label ="NMO",lw=2)
 
 plt.xlabel(r'$\tau$',labelpad=-10,fontsize=fontsize)
 plt.ylabel("convergence rate",fontsize=fontsize)
-plt.xticks([0,2.4*10**(-13)])
+plt.xticks([0,0.1])
 plt.legend(edgecolor=(1,1,1),fontsize=fontsize-1)
 plt.savefig(outdir / "sqc_bound_cont.pdf", dpi=300, bbox_inches="tight")
 
