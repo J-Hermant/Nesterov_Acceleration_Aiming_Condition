@@ -9,8 +9,8 @@ from functions import grad_g
 from functions import L_smooth
 # Definition domain, grid
 bound_square = 1.2638
-x_vals = np.linspace(-bound_square, bound_square, 2000)
-y_vals = np.linspace(-bound_square, bound_square, 2000)
+x_vals = np.linspace(-bound_square, bound_square, 1000)
+y_vals = np.linspace(-bound_square, bound_square, 1000)
 X, Y = np.meshgrid(x_vals, y_vals)
 epsilon = 0.1
 
